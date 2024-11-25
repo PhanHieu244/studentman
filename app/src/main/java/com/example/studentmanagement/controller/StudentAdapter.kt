@@ -21,12 +21,11 @@ import com.example.studentmanagement.database.StudentData
 import com.example.studentmanagement.model.Student
 import com.google.android.material.snackbar.Snackbar
 
-class StudentAdapter(private var students: MutableList<Student>): RecyclerView.Adapter<StudentAdapter.StudentViewHolder>() {
-    class StudentViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
-        val studentName: TextView = itemView.findViewById(R.id.student_name)
-        val studentID: TextView = itemView.findViewById(R.id.student_id)
-        val imageEdit: ImageView = itemView.findViewById(R.id.image_edit)
-        val imageRemove: ImageView = itemView.findViewById(R.id.image_remove)
+class StudentAdapter(private var students: MutableList<Student>) : RecyclerView.Adapter<StudentAdapter.StudentViewHolder>() {
+
+    class StudentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val studentName: TextView = itemView.findViewById(R.id.text_student_name)
+        val studentID: TextView = itemView.findViewById(R.id.text_student_id)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StudentViewHolder {
@@ -40,44 +39,48 @@ class StudentAdapter(private var students: MutableList<Student>): RecyclerView.A
         val student = students[position]
 
         holder.studentName.text = student.studentName
-        holder.studentID.text= student.studentId
+        holder.studentID.text = student.studentId
 
-        holder.imageEdit.setOnClickListener {
-            showUpdateDialog(holder.itemView.context, position)
+        holder.itemView.setOnClickListener { view ->
+            view.showContextMenu()
+
         }
-        holder.imageRemove.setOnClickListener {
-            showRemoveDialog(holder.itemView.context, position)
+
+        holder.itemView.setOnCreateContextMenuListener { menu, view, menuInfo ->
+
+            (view.context as AppCompatActivity).menuInflater.inflate(R.menu.context_menu_student, menu)
+
+            menu.findItem(R.id.menu_edit).setOnMenuItemClickListener {
+                showUpdateDialog(view.context, position)
+                true
+            }
+            menu.findItem(R.id.menu_remove).setOnMenuItemClickListener {
+                showRemoveDialog(view.context, position)
+                true
+            }
         }
     }
 
+
+
+
     private fun showUpdateDialog(context: Context, position: Int) {
         val student = students[position]
-        val dialog = Dialog(context)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.layout_dialog_edit)
-
-        dialog.window?.setLayout(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        val dialog = createDialog(context, R.layout.layout_dialog_edit)
         dialog.show()
-
-        val buttonUpdate = dialog.findViewById<Button>(R.id.btn_update)
-        val buttonCancel = dialog.findViewById<Button>(R.id.btn_cancel_update)
 
         val updateName = dialog.findViewById<EditText>(R.id.update_name)
         val updateID = dialog.findViewById<EditText>(R.id.update_id)
-
         updateName.setText(student.studentName)
         updateID.setText(student.studentId)
 
-        buttonUpdate.setOnClickListener {
+        dialog.findViewById<Button>(R.id.btn_update).setOnClickListener {
             val updatedName = updateName.text.toString()
             val updatedID = updateID.text.toString()
 
             if (updatedName.isNotEmpty() && updatedID.isNotEmpty()) {
-                val updatedStudent = Student(updatedName, updatedID)
-                students[position] = updatedStudent
+                students[position] = Student(updatedName, updatedID)
                 notifyItemChanged(position)
-
                 Toast.makeText(context, "Cập nhật thông tin thành công", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             } else {
@@ -85,44 +88,40 @@ class StudentAdapter(private var students: MutableList<Student>): RecyclerView.A
             }
         }
 
-        buttonCancel.setOnClickListener {
-            dialog.dismiss()
-        }
+        dialog.findViewById<Button>(R.id.btn_cancel_update).setOnClickListener { dialog.dismiss() }
     }
 
     private fun showRemoveDialog(context: Context, position: Int) {
         val student = students[position]
-        val dialog = Dialog(context)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.layout_dialog_remove)
-
-        dialog.window?.setLayout(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        val dialog = createDialog(context, R.layout.layout_dialog_remove)
         dialog.show()
 
-        val buttonRemove = dialog.findViewById<Button>(R.id.btn_remove)
-        val buttonCancel = dialog.findViewById<Button>(R.id.btn_cancel_remove)
-
-        buttonRemove.setOnClickListener{
-            StudentData.students.remove(student)
+        dialog.findViewById<Button>(R.id.btn_remove).setOnClickListener {
+            students.removeAt(position)
             notifyItemRemoved(position)
 
-            val snackbar = Snackbar.make((context as AppCompatActivity)
-                .findViewById(R.id.recycler_view_students),
-                "Xóa thông tin sinh viên thành công",
-                Snackbar.LENGTH_SHORT)
-
+            val snackbar = Snackbar.make(
+                (context as AppCompatActivity).findViewById(R.id.recycler_view_students),
+                "Delete student successfully",
+                Snackbar.LENGTH_SHORT
+            )
             snackbar.setAction("Hoàn tác") {
-                StudentData.students.add(position, student)
+                students.add(position, student)
                 notifyItemInserted(position)
             }
-
             snackbar.show()
             dialog.dismiss()
         }
 
-        buttonCancel.setOnClickListener{
-            dialog.dismiss()
-        }
+        dialog.findViewById<Button>(R.id.btn_cancel_remove).setOnClickListener { dialog.dismiss() }
+    }
+
+    private fun createDialog(context: Context, layoutResId: Int): Dialog {
+        val dialog = Dialog(context)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(layoutResId)
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        return dialog
     }
 }

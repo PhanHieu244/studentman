@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="@drawable/bg_purple_corner_16"
+        android:background="@drawable/bg_green_corner_16"
         android:text="@string/add_new"
         android:textColor="@color/white"
         android:gravity="center"
@@ -66,13 +66,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_grey_corner_10"
+        android:text="@string/cancel"
+        android:textSize="15sp"
         app:layout_constraintEnd_toStartOf="@+id/btn_add"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/edit_id"
-        android:background="@drawable/bg_grey_corner_10"
-        android:textSize="15sp"
-        android:layout_weight="1"
-        android:text="@string/cancel"/>
+        app:layout_constraintTop_toBottomOf="@+id/edit_id" />
 
     <Button
         android:id="@+id/btn_add"
