@@ -1,24 +1,19 @@
 package com.example.studentmanagement
 
-import android.app.ActionBar
-import android.app.Dialog
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.Window
-import android.widget.Button
-import android.widget.EditText
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.studentmanagement.controller.AddStudentFragment
+import com.example.studentmanagement.controller.EditStudentFragment
+import com.example.studentmanagement.controller.RemoveStudentFragment
 import com.example.studentmanagement.controller.StudentAdapter
 import com.example.studentmanagement.database.StudentData
 import com.example.studentmanagement.model.Student
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), OnStudentFragment {
     private lateinit var studentAdapter: StudentAdapter
     private lateinit var students: MutableList<Student>
 
@@ -27,9 +22,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
         students = StudentData.students
-        studentAdapter = StudentAdapter(students)
+        studentAdapter = StudentAdapter(students, this)
 
-        findViewById<RecyclerView>(R.id.recycler_view_students).run {
+         findViewById<RecyclerView>(R.id.recycler_view_students).run {
             adapter = studentAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
@@ -43,15 +38,51 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_add_student -> {
-                showAddStudentDialog()
+                showAddStudentFragment()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
 
+    override fun showAddStudentFragment() {
+        val fragment = AddStudentFragment()
+        fragment.setOnStudentAddedListener(object : AddStudentFragment.OnStudentAddedListener {
+
+            override fun onStudentAdded(name: String, id: String) {
+                students.add(Student(name, id))
+                studentAdapter.notifyItemInserted(students.size - 1)
+            }
+        })
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    override fun showRemoveStudentFragment(position: Int, student: Student) {
+        val fragment = RemoveStudentFragment()
+        fragment.setup(studentAdapter, position, student)
+        // Begin a fragment transaction to add the fragment
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    override fun showEditStudentFragment(position: Int, student: Student) {
+        val fragment = EditStudentFragment()
+        fragment.setup(studentAdapter, position, student)
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+
     private fun showAddStudentDialog() {
-        val dialog = Dialog(this)
+        /*val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.layout_dialog_add)
 
@@ -77,6 +108,12 @@ class MainActivity : AppCompatActivity() {
 
         btnCancel.setOnClickListener {
             dialog.dismiss()
-        }
+        }*/
     }
+}
+
+public interface OnStudentFragment{
+    fun showAddStudentFragment()
+    fun showRemoveStudentFragment(position: Int, student: Student)
+    fun showEditStudentFragment(position: Int, student: Student)
 }

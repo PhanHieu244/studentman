@@ -1,6 +1,5 @@
 package com.example.studentmanagement.controller
 
-import android.app.ActionBar
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
@@ -11,17 +10,18 @@ import android.view.ViewGroup
 import android.view.Window
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.example.studentmanagement.OnStudentFragment
 import com.example.studentmanagement.R
-import com.example.studentmanagement.database.StudentData
 import com.example.studentmanagement.model.Student
 import com.google.android.material.snackbar.Snackbar
 
-class StudentAdapter(private var students: MutableList<Student>) : RecyclerView.Adapter<StudentAdapter.StudentViewHolder>() {
+class StudentAdapter(private var students: MutableList<Student>,private var listener: OnStudentFragment) :
+    RecyclerView.Adapter<StudentAdapter.StudentViewHolder>(), StudentActionListener
+{
 
     class StudentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val studentName: TextView = itemView.findViewById(R.id.text_student_name)
@@ -41,31 +41,28 @@ class StudentAdapter(private var students: MutableList<Student>) : RecyclerView.
         holder.studentName.text = student.studentName
         holder.studentID.text = student.studentId
 
-        holder.itemView.setOnClickListener { view ->
+        holder.itemView.setOnLongClickListener { view ->
             view.showContextMenu()
 
         }
 
         holder.itemView.setOnCreateContextMenuListener { menu, view, menuInfo ->
-
             (view.context as AppCompatActivity).menuInflater.inflate(R.menu.context_menu_student, menu)
-
             menu.findItem(R.id.menu_edit).setOnMenuItemClickListener {
-                showUpdateDialog(view.context, position)
+                listener.showEditStudentFragment(position, students[position])
+                //showUpdateDialog(view.context, position)
                 true
             }
             menu.findItem(R.id.menu_remove).setOnMenuItemClickListener {
+                //listener.showRemoveStudentFragment(position, students[position])
                 showRemoveDialog(view.context, position)
                 true
             }
         }
     }
 
-
-
-
     private fun showUpdateDialog(context: Context, position: Int) {
-        val student = students[position]
+        /*val student = students[position]
         val dialog = createDialog(context, R.layout.layout_dialog_edit)
         dialog.show()
 
@@ -80,7 +77,6 @@ class StudentAdapter(private var students: MutableList<Student>) : RecyclerView.
 
             if (updatedName.isNotEmpty() && updatedID.isNotEmpty()) {
                 students[position] = Student(updatedName, updatedID)
-                notifyItemChanged(position)
                 Toast.makeText(context, "Cập nhật thông tin thành công", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             } else {
@@ -88,12 +84,12 @@ class StudentAdapter(private var students: MutableList<Student>) : RecyclerView.
             }
         }
 
-        dialog.findViewById<Button>(R.id.btn_cancel_update).setOnClickListener { dialog.dismiss() }
+        dialog.findViewById<Button>(R.id.btn_cancel_update).setOnClickListener { dialog.dismiss() }*/
     }
 
     private fun showRemoveDialog(context: Context, position: Int) {
         val student = students[position]
-        val dialog = createDialog(context, R.layout.layout_dialog_remove)
+        val dialog = createDialog(context, R.layout.layout_fragment_remove)
         dialog.show()
 
         dialog.findViewById<Button>(R.id.btn_remove).setOnClickListener {
@@ -124,4 +120,32 @@ class StudentAdapter(private var students: MutableList<Student>) : RecyclerView.
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         return dialog
     }
+
+    override fun onEditStudent(position: Int, editStudent: Student) {
+        val student = students[position]
+        students[position] = editStudent
+        notifyItemChanged(position)
+    }
+
+    override fun onRemoveStudent(position: Int, student: Student, context: Context) {
+        students.removeAt(position)
+        notifyItemRemoved(position)
+
+        val snackbar = Snackbar.make(
+            (context as AppCompatActivity).findViewById(R.id.recycler_view_students),
+            "Delete student successfully",
+            Snackbar.LENGTH_SHORT
+        )
+        snackbar.setAction("Hoàn tác") {
+            students.add(position, student)
+            notifyItemInserted(position)
+        }
+        snackbar.show()
+    }
+}
+
+public interface StudentActionListener{
+    fun onEditStudent(position: Int, editStudent: Student)
+    fun onRemoveStudent(position: Int, student: Student, context: Context)
+   // fun onInsertStudent(position: Int, student: Student)
 }
