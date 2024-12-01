@@ -17,7 +17,7 @@ class AddStudentFragment : Fragment(R.layout.layout_add_student_fragment) {
 
     private var listener: OnStudentAddedListener? = null
 
-    fun setOnStudentAddedListener(listener: OnStudentAddedListener) {
+    private fun setOnStudentAddedListener(listener: OnStudentAddedListener?) {
         this.listener = listener
     }
 
@@ -25,6 +25,7 @@ class AddStudentFragment : Fragment(R.layout.layout_add_student_fragment) {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        setOnStudentAddedListener(FragmentSingleton.getInstance().onStudentAddedListener)
         return inflater.inflate(R.layout.layout_add_student_fragment, container, false)
     }
 

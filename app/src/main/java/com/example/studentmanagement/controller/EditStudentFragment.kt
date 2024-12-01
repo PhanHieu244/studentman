@@ -1,5 +1,6 @@
 package com.example.studentmanagement.controller
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,10 +15,10 @@ import com.example.studentmanagement.model.Student
 class EditStudentFragment : Fragment() {
 
     private var listener: StudentActionListener? = null
-    private var position: Int = -1
-    private lateinit var student: Student
+    private var position: Int = 0
+    private var student: Student? = null
 
-    fun setup(listener: StudentActionListener, position: Int, student: Student) {
+    fun setup(listener: StudentActionListener?, position: Int, student: Student?) {
         this.listener = listener
         this.position = position
         this.student = student
@@ -27,6 +28,7 @@ class EditStudentFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        setup(FragmentSingleton.getInstance().studentActionListener, FragmentSingleton.getInstance().position, FragmentSingleton.getInstance().student)
         return inflater.inflate(R.layout.layout_fragment_edit, container, false)
     }
 
@@ -36,8 +38,8 @@ class EditStudentFragment : Fragment() {
         val btnUpdate = view.findViewById<Button>(R.id.btn_update)
         val btnCancel = view.findViewById<Button>(R.id.btn_cancel_update)
 
-        updateName.setText(student.studentName)
-        updateID.setText(student.studentId)
+        updateName.setText(student?.studentName)
+        updateID.setText(student?.studentId)
 
         btnUpdate.setOnClickListener {
             val updatedName = updateName.text.toString()
