@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
@@ -14,11 +15,8 @@ import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.studentmanagement.R
 import com.example.studentmanagement.controller.AddStudentFragment
-import com.example.studentmanagement.controller.EditStudentFragment
 import com.example.studentmanagement.controller.FragmentSingleton
-import com.example.studentmanagement.controller.RemoveStudentFragment
 import com.example.studentmanagement.controller.StudentAdapter
 import com.example.studentmanagement.database.StudentData
 import com.example.studentmanagement.model.Student
@@ -54,6 +52,8 @@ class MainActivity : AppCompatActivity(), OnStudentFragment {
             adapter = studentAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
+
+        setupNav()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -75,6 +75,39 @@ class MainActivity : AppCompatActivity(), OnStudentFragment {
         val navController = findNavController(R.id.nav_host_fragment)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
         return NavigationUI.navigateUp(navController, drawerLayout) || super.onSupportNavigateUp()
+    }
+
+    private fun setupNav(){
+        val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
+        val navView: NavigationView = findViewById(R.id.nav_view)
+
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.list_student_nav -> {
+                    // Navigate to the List Student Fragment
+                    findNavController(R.id.nav_host_fragment).navigate(R.id.listStudentFragment)
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.add_student_nav -> {
+                    // Navigate to the Add Student Fragment
+                    showAddStudentFragment()
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.edit_student_nav -> {
+                    // Navigate to the Edit Student Fragment
+                    FragmentSingleton.getInstance().student?.let {
+                        showEditStudentFragment(FragmentSingleton.getInstance().position,
+                            it
+                        )
+                        drawerLayout.closeDrawer(GravityCompat.START)
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     override fun showAddStudentFragment() {

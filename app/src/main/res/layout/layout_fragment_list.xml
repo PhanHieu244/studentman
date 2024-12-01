@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:visibility="invisible"
-    tools:visibility="invisible">
+    android:background="#FF0000"
+    android:backgroundTint="#FF0000"
+    android:visibility="gone"
+    tools:visibility="gone">
 
 </androidx.constraintlayout.widget.ConstraintLayout>
