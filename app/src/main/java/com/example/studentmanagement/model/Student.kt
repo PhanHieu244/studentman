@@ -3,10 +3,11 @@ package com.example.studentmanagement.model
 import android.os.Parcel
 import android.os.Parcelable
 
-data class Student(val studentName: String, val studentId: String) : Parcelable {
+data class Student(val studentName: String, val studentId: String, val id: Int) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
-        parcel.readString() ?: ""
+        parcel.readString() ?: "",
+        parcel.readInt() ?: 0
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {

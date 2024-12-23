@@ -1,7 +1,6 @@
 package com.example.studentmanagement
 
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -18,7 +17,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.studentmanagement.controller.AddStudentFragment
 import com.example.studentmanagement.controller.FragmentSingleton
 import com.example.studentmanagement.controller.StudentAdapter
-import com.example.studentmanagement.database.StudentData
 import com.example.studentmanagement.database.StudentDatabaseHelper
 import com.example.studentmanagement.model.Student
 import com.google.android.material.navigation.NavigationView
@@ -116,9 +114,9 @@ class MainActivity : AppCompatActivity(), OnStudentFragment {
     override fun showAddStudentFragment() {
         FragmentSingleton.getInstance().onStudentAddedListener = object : AddStudentFragment.OnStudentAddedListener {
 
-            override fun onStudentAdded(name: String, id: String) {
-                val newStudent = Student(name, id)
-                if (dbHelper.addStudent(newStudent) != -1L) {
+            override fun onStudentAdded(name: String, studentId: String) {
+                val newStudent = dbHelper.addStudent(studentId, name)
+                if (newStudent != null) {
                     students.add(newStudent)
                     studentAdapter.notifyItemInserted(students.size - 1)
                 }

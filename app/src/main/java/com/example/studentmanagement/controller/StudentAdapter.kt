@@ -95,6 +95,10 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
         dialog.show()
 
         dialog.findViewById<Button>(R.id.btn_remove).setOnClickListener {
+            val id = dbHelper.deleteStudent(student.id)
+            if (id <= 0) {
+                Log.e("student", "onRemoveStudent: error sql")
+            }
             students.removeAt(position)
             notifyItemRemoved(position)
 
@@ -104,8 +108,11 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
                 Snackbar.LENGTH_SHORT
             )
             snackbar.setAction("Hoàn tác") {
-                students.add(position, student)
-                notifyItemInserted(position)
+                var studentRevert = dbHelper.addStudent(student.studentId, student.studentName)
+                if(studentRevert != null){
+                    students.add(position, studentRevert)
+                    notifyItemInserted(position)
+                }
             }
             snackbar.show()
             dialog.dismiss()
@@ -124,7 +131,7 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
     }
 
     override fun onEditStudent(position: Int, editStudent: Student) {
-        val id = dbHelper.updateStudent(editStudent, position)
+        val id = dbHelper.updateStudent(editStudent, editStudent.id)
         if (id > 0) {
             students[position] = editStudent
             notifyItemChanged(position)
@@ -133,7 +140,7 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
     }
 
     override fun onRemoveStudent(position: Int, student: Student, context: Context) {
-        val id = dbHelper.deleteStudent(position)
+        val id = dbHelper.deleteStudent(student.id)
         if (id <= 0) {
             Log.e("student", "onRemoveStudent: error sql")
             return
@@ -148,9 +155,12 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
             Snackbar.LENGTH_SHORT
         )
         snackbar.setAction("Hoàn tác") {
-            students.add(position, student)
-            dbHelper.addStudent(student)
-            notifyItemInserted(position)
+
+            var studentRevert = dbHelper.addStudent(student.studentId, student.studentName)
+            if(studentRevert != null){
+                students.add(position, studentRevert)
+                notifyItemInserted(position)
+            }
         }
         snackbar.show()
     }
