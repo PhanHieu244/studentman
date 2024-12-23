@@ -19,12 +19,14 @@ import com.example.studentmanagement.controller.AddStudentFragment
 import com.example.studentmanagement.controller.FragmentSingleton
 import com.example.studentmanagement.controller.StudentAdapter
 import com.example.studentmanagement.database.StudentData
+import com.example.studentmanagement.database.StudentDatabaseHelper
 import com.example.studentmanagement.model.Student
 import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity(), OnStudentFragment {
 
     private lateinit var studentAdapter: StudentAdapter
+    private lateinit var dbHelper: StudentDatabaseHelper
     private lateinit var students: MutableList<Student>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,8 +47,9 @@ class MainActivity : AppCompatActivity(), OnStudentFragment {
         val navView: NavigationView = findViewById(R.id.nav_view)
         navView.setupWithNavController(navController)
 
-        students = StudentData.students
-        studentAdapter = StudentAdapter(students, this)
+        dbHelper = StudentDatabaseHelper(this)
+        students = dbHelper.getAllStudents()
+        studentAdapter = StudentAdapter(students, this, dbHelper)
 
         findViewById<RecyclerView>(R.id.recycler_view_students).run {
             adapter = studentAdapter
@@ -114,9 +117,11 @@ class MainActivity : AppCompatActivity(), OnStudentFragment {
         FragmentSingleton.getInstance().onStudentAddedListener = object : AddStudentFragment.OnStudentAddedListener {
 
             override fun onStudentAdded(name: String, id: String) {
-                Log.i("add", "add")
-                students.add(Student(name, id))
-                studentAdapter.notifyItemInserted(students.size - 1)
+                val newStudent = Student(name, id)
+                if (dbHelper.addStudent(newStudent) != -1L) {
+                    students.add(newStudent)
+                    studentAdapter.notifyItemInserted(students.size - 1)
+                }
             }
         }
         findNavController(R.id.nav_host_fragment).navigate(R.id.addStudentFragment)

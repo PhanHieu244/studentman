@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,10 +17,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.studentmanagement.OnStudentFragment
 import com.example.studentmanagement.R
+import com.example.studentmanagement.database.StudentDatabaseHelper
 import com.example.studentmanagement.model.Student
 import com.google.android.material.snackbar.Snackbar
 
-class StudentAdapter(private var students: MutableList<Student>,private var listener: OnStudentFragment) :
+class StudentAdapter(private var students: MutableList<Student>, private var listener: OnStudentFragment, private var dbHelper: StudentDatabaseHelper) :
     RecyclerView.Adapter<StudentAdapter.StudentViewHolder>(), StudentActionListener
 {
 
@@ -122,13 +124,22 @@ class StudentAdapter(private var students: MutableList<Student>,private var list
     }
 
     override fun onEditStudent(position: Int, editStudent: Student) {
-        val student = students[position]
-        students[position] = editStudent
+        val id = dbHelper.updateStudent(editStudent, position)
+        if (id > 0) {
+            students[position] = editStudent
+            notifyItemChanged(position)
+        }
         notifyItemChanged(position)
     }
 
     override fun onRemoveStudent(position: Int, student: Student, context: Context) {
+        val id = dbHelper.deleteStudent(position)
+        if (id <= 0) {
+            Log.e("student", "onRemoveStudent: error sql")
+            return
+        }
         students.removeAt(position)
+        notifyItemRemoved(position)
         notifyItemRemoved(position)
 
         val snackbar = Snackbar.make(
@@ -138,6 +149,7 @@ class StudentAdapter(private var students: MutableList<Student>,private var list
         )
         snackbar.setAction("Hoàn tác") {
             students.add(position, student)
+            dbHelper.addStudent(student)
             notifyItemInserted(position)
         }
         snackbar.show()
