@@ -4,27 +4,28 @@ import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.studentmanagement.OnStudentFragment
 import com.example.studentmanagement.R
-import com.example.studentmanagement.database.StudentDatabaseHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.example.studentmanagement.database.StudentDao
 import com.example.studentmanagement.model.Student
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.withContext
 
-class StudentAdapter(private var students: MutableList<Student>, private var listener: OnStudentFragment, private var dbHelper: StudentDatabaseHelper) :
+class StudentAdapter(private var students: MutableList<Student>, private var listener: OnStudentFragment, private var studentDao: StudentDao) :
     RecyclerView.Adapter<StudentAdapter.StudentViewHolder>(), StudentActionListener
 {
-
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
     class StudentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val studentName: TextView = itemView.findViewById(R.id.text_student_name)
         val studentID: TextView = itemView.findViewById(R.id.text_student_id)
@@ -95,6 +96,13 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
         dialog.show()
 
         dialog.findViewById<Button>(R.id.btn_remove).setOnClickListener {
+            coroutineScope.launch {
+                val rowsDeleted = studentDao.deleteStudent(student)
+                if (rowsDeleted > 0) {
+                    students.removeAt(position)
+                    notifyItemRemoved(position)
+                }
+            }
             students.removeAt(position)
             notifyItemRemoved(position)
 
@@ -104,8 +112,17 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
                 Snackbar.LENGTH_SHORT
             )
             snackbar.setAction("Hoàn tác") {
-                students.add(position, student)
-                notifyItemInserted(position)
+                coroutineScope.launch {
+                    val newStudent = Student(studentName = student.studentName, studentId = student.studentId)
+                    val insertedId = studentDao.insertStudent(newStudent)
+                    if (insertedId > 0) {
+                        val studentRevert = newStudent.copy(id = insertedId.toInt())
+                        withContext(Dispatchers.Main) {
+                            students.add(position, studentRevert)
+                            notifyItemInserted(position)
+                        }
+                    }
+                }
             }
             snackbar.show()
             dialog.dismiss()
@@ -124,16 +141,18 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
     }
 
     override fun onEditStudent(position: Int, editStudent: Student) {
-        val id = dbHelper.updateStudent(editStudent, position)
-        if (id > 0) {
-            students[position] = editStudent
-            notifyItemChanged(position)
+        coroutineScope.launch {
+            val rowsUpdated = studentDao.updateStudent(editStudent)
+            if (rowsUpdated > 0) {
+                students[position] = editStudent
+                notifyItemChanged(position)
+            }
         }
         notifyItemChanged(position)
     }
 
     override fun onRemoveStudent(position: Int, student: Student, context: Context) {
-        val id = dbHelper.deleteStudent(position)
+        /*val id = dbHelper.deleteStudent(student.id)
         if (id <= 0) {
             Log.e("student", "onRemoveStudent: error sql")
             return
@@ -148,11 +167,14 @@ class StudentAdapter(private var students: MutableList<Student>, private var lis
             Snackbar.LENGTH_SHORT
         )
         snackbar.setAction("Hoàn tác") {
-            students.add(position, student)
-            dbHelper.addStudent(student)
-            notifyItemInserted(position)
+
+            var studentRevert = dbHelper.addStudent(student.studentId, student.studentName)
+            if(studentRevert != null){
+                students.add(position, studentRevert)
+                notifyItemInserted(position)
+            }
         }
-        snackbar.show()
+        snackbar.show()*/
     }
 }
 

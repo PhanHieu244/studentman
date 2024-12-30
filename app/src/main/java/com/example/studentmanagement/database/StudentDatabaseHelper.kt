@@ -12,7 +12,7 @@ class StudentDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
         private const val DATABASE_NAME = "student_management.db"
         private const val DATABASE_VERSION = 1
         private const val TABLE_NAME = "students"
-        private const val COLUMN_ID = "id"
+        private const val ID = "id"
         private const val COLUMN_NAME = "name"
         private const val COLUMN_STUDENT_ID = "student_id"
     }
@@ -20,7 +20,7 @@ class StudentDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
     override fun onCreate(db: SQLiteDatabase?) {
         val createTableQuery = """
         CREATE TABLE $TABLE_NAME (
-            $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $ID INTEGER PRIMARY KEY AUTOINCREMENT,
             $COLUMN_NAME TEXT NOT NULL,
             $COLUMN_STUDENT_ID TEXT NOT NULL
         )
@@ -50,23 +50,30 @@ class StudentDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
 
         with(cursor) {
             while (moveToNext()) {
+                val id = getInt(getColumnIndexOrThrow(ID))
                 val name = getString(getColumnIndexOrThrow(COLUMN_NAME))
                 val studentId = getString(getColumnIndexOrThrow(COLUMN_STUDENT_ID))
-                students.add(Student(name, studentId))
+                students.add(Student(name, studentId, id))
             }
             close()
         }
         return students
     }
 
-    fun addStudent(student: Student): Long {
+    fun addStudent(studentId: String, studentName: String): Student? {
         val db = writableDatabase
         val values = ContentValues().apply {
-            put(COLUMN_STUDENT_ID, student.studentId)
-            put(COLUMN_NAME, student.studentName)
+            put(COLUMN_STUDENT_ID, studentId)
+            put(COLUMN_NAME, studentName)
         }
-        return db.insert(TABLE_NAME, null, values)
+        val newRowId = db.insert(TABLE_NAME, null, values)
+        return if (newRowId != -1L) {
+            Student(studentName, studentId, newRowId.toInt())
+        } else {
+            null
+        }
     }
+
 
     fun updateStudent(student: Student, id: Int): Int {
         val db = writableDatabase
@@ -74,11 +81,11 @@ class StudentDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
             put(COLUMN_NAME, student.studentName)
             put(COLUMN_STUDENT_ID, student.studentId)
         }
-        return db.update(TABLE_NAME, values, "$COLUMN_ID=?", arrayOf(id.toString()))
+        return db.update(TABLE_NAME, values, "$ID=?", arrayOf(id.toString()))
     }
 
     fun deleteStudent(id: Int): Int {
         val db = writableDatabase
-        return db.delete(TABLE_NAME, "$COLUMN_ID=?", arrayOf(id.toString()))
+        return db.delete(TABLE_NAME, "$ID=?", arrayOf(id.toString()))
     }
 }

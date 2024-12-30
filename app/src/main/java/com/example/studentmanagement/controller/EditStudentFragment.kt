@@ -1,6 +1,5 @@
 package com.example.studentmanagement.controller
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -46,7 +45,7 @@ class EditStudentFragment : Fragment() {
             val updatedID = updateID.text.toString()
 
             if (updatedName.isNotEmpty() && updatedID.isNotEmpty()) {
-                val updatedStudent = Student(updatedName, updatedID)
+                val updatedStudent = Student(updatedName, updatedID, student?.id?: -1)
                 listener?.onEditStudent(position, updatedStudent)
                 Toast.makeText(requireContext(), "Updated successfully", Toast.LENGTH_SHORT).show()
                 parentFragmentManager.popBackStack()
