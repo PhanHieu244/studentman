@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -17,14 +18,17 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.studentmanagement.controller.AddStudentFragment
 import com.example.studentmanagement.controller.FragmentSingleton
 import com.example.studentmanagement.controller.StudentAdapter
-import com.example.studentmanagement.database.StudentDatabaseHelper
+import com.example.studentmanagement.database.StudentDao
+import com.example.studentmanagement.database.StudentDatabase
 import com.example.studentmanagement.model.Student
 import com.google.android.material.navigation.NavigationView
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), OnStudentFragment {
 
     private lateinit var studentAdapter: StudentAdapter
-    private lateinit var dbHelper: StudentDatabaseHelper
+    private lateinit var studentDatabase: StudentDatabase
+    private lateinit var studentDao: StudentDao
     private lateinit var students: MutableList<Student>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,16 +49,21 @@ class MainActivity : AppCompatActivity(), OnStudentFragment {
         val navView: NavigationView = findViewById(R.id.nav_view)
         navView.setupWithNavController(navController)
 
-        dbHelper = StudentDatabaseHelper(this)
-        students = dbHelper.getAllStudents()
-        studentAdapter = StudentAdapter(students, this, dbHelper)
-
-        findViewById<RecyclerView>(R.id.recycler_view_students).run {
-            adapter = studentAdapter
-            layoutManager = LinearLayoutManager(this@MainActivity)
+        studentDatabase = StudentDatabase.getInstance(this)
+        studentDao = studentDatabase.studentDao()
+        lifecycleScope.launch {
+            students = studentDao.getAllStudents().toMutableList()
+            setupRecyclerView()
         }
 
         setupNav()
+    }
+    private fun setupRecyclerView() {
+        studentAdapter = StudentAdapter(students, this, studentDao)
+        findViewById<RecyclerView>(R.id.recycler_view_students).apply {
+            adapter = studentAdapter
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -115,10 +124,14 @@ class MainActivity : AppCompatActivity(), OnStudentFragment {
         FragmentSingleton.getInstance().onStudentAddedListener = object : AddStudentFragment.OnStudentAddedListener {
 
             override fun onStudentAdded(name: String, studentId: String) {
-                val newStudent = dbHelper.addStudent(studentId, name)
-                if (newStudent != null) {
-                    students.add(newStudent)
-                    studentAdapter.notifyItemInserted(students.size - 1)
+                lifecycleScope.launch {
+                    val newStudent = Student(name, studentId)
+                    val id = studentDao.insertStudent(newStudent)
+                    if (id > 0) {
+                        val studentWithId = newStudent.copy(id = id.toInt())
+                        students.add(studentWithId)
+                        studentAdapter.notifyItemInserted(students.size - 1)
+                    }
                 }
             }
         }
